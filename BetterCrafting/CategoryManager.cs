@@ -1,10 +1,7 @@
 ﻿using StardewModdingAPI;
 using StardewValley;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BetterCrafting
 {
@@ -55,7 +52,7 @@ namespace BetterCrafting
                 {
                     this.data.categoryNames.Add("misc", "Misc");
                 }
-                
+
                 this.itemCategories.Add(new ItemCategory("misc"));
             }
         }

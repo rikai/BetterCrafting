@@ -1,19 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
+using StardewValley.Objects;
+using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
-    class BetterCraftingPage : IClickableMenu
+    internal class BetterCraftingPage : CraftingPage
     {
         private const int WIDTH = 800;
         private const string AVAILABLE = "a";
@@ -28,21 +27,13 @@ namespace BetterCrafting
 
         private CategoryManager categoryManager;
 
-        private InventoryMenu inventory;
-
         private Dictionary<ItemCategory, List<Dictionary<ClickableTextureComponent, CraftingRecipe>>> recipes;
         private Dictionary<ClickableComponent, ItemCategory> categories;
-
-        private ClickableTextureComponent upButton;
-        private ClickableTextureComponent downButton;
 
         private ClickableComponent[] selectables;
 
         private ItemCategory selectedCategory;
         private int recipePage;
-
-        private ClickableTextureComponent trashCan;
-        private float trashCanLidRotation;
 
         private ClickableComponent throwComp;
 
@@ -63,15 +54,21 @@ namespace BetterCrafting
         private int snappedId = 0;
         private int snappedSection = 1;
 
-        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory)
+        public ClickableTextureComponent junimoNoteIcon;
+
+        public new List<Chest> _materialContainers;
+
+        public BetterCraftingPage(ModEntry betterCrafting, CategoryData categoryData, Nullable<ItemCategory> defaultCategory, List<Chest>material_containers = null)
             : base(Game1.activeClickableMenu.xPositionOnScreen, Game1.activeClickableMenu.yPositionOnScreen, Game1.activeClickableMenu.width, Game1.activeClickableMenu.height)
         {
-            this.betterCrafting = betterCrafting;
+            _materialContainers = material_containers;
+            _ = _materialContainers;
 
+            this.betterCrafting = betterCrafting;
             this.categoryManager = new CategoryManager(betterCrafting.Monitor, categoryData);
 
             this.inventory = new InventoryMenu(this.xPositionOnScreen + IClickableMenu.spaceToClearSideBorder + IClickableMenu.borderWidth,
-                this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + IClickableMenu.borderWidth + Game1.tileSize * 5 - Game1.tileSize / 4,
+                   this.yPositionOnScreen + IClickableMenu.spaceToClearTopBorder + IClickableMenu.borderWidth + Game1.tileSize * 5 - Game1.tileSize / 4,
                 false);
             this.inventory.showGrayedOutSlots = true;
 
@@ -113,7 +110,7 @@ namespace BetterCrafting
                 var y = this.yPositionOnScreen + tabPad + catIndex * (height + categorySpacing);
 
                 var c = new ClickableComponent(
-                    new Rectangle((int) x, (int) y, (int) width, (int) height),
+                    new Rectangle((int)x, (int)y, (int)width, (int)height),
                     category.Equals(this.selectedCategory) ? UNAVAILABLE : AVAILABLE, catName);
                 c.myID = id;
                 c.upNeighborID = id - 1;
@@ -125,6 +122,16 @@ namespace BetterCrafting
                 id += 1;
             }
 
+            if (ShouldShowJunimoNoteIcon())
+            {
+                junimoNoteIcon = new ClickableTextureComponent("", new Rectangle(xPositionOnScreen + width, yPositionOnScreen + 96, 64, 64), "", Game1.content.LoadString("Strings\\UI:GameMenu_JunimoNote_Hover"), Game1.mouseCursors, new Rectangle(331, 374, 15, 14), 4f)
+                {
+                    myID = 898,
+                    leftNeighborID = 11,
+                    downNeighborID = 106
+                };
+            }
+
             this.trashCan = new ClickableTextureComponent(
                 new Rectangle(
                     this.xPositionOnScreen + width + 4,
@@ -132,7 +139,7 @@ namespace BetterCrafting
                     Game1.tileSize, 104),
                 Game1.mouseCursors,
                 new Rectangle(669, 261, 16, 26),
-                (float)Game1.pixelZoom, false);
+                Game1.pixelZoom, false);
 
             this.throwComp = new ClickableComponent(
                 new Rectangle(
@@ -151,9 +158,24 @@ namespace BetterCrafting
                 "Old Crafting Menu",
                 Game1.mouseCursors,
                 new Rectangle(162, 440, 16, 16),
-                (float)Game1.pixelZoom, false);
+                Game1.pixelZoom, false);
+        }
 
-            this.UpdateInventory();
+        public static bool ShouldShowJunimoNoteIcon()
+        {
+            if (Game1.player.hasOrWillReceiveMail("canReadJunimoText") && !Game1.player.hasOrWillReceiveMail("JojaMember"))
+            {
+                if (Game1.MasterPlayer.hasCompletedCommunityCenter())
+                {
+                    if (Game1.player.hasOrWillReceiveMail("hasSeenAbandonedJunimoNote"))
+                    {
+                        return !Game1.MasterPlayer.hasOrWillReceiveMail("ccMovieTheater");
+                    }
+                    return false;
+                }
+                return true;
+            }
+            return false;
         }
 
         public void UpdateInventory()
@@ -243,7 +265,7 @@ namespace BetterCrafting
                     : Game1.getSourceRectForStandardTileSheet(
                         Game1.objectSpriteSheet,
                         recipe.getIndexOfMenuView(), 16, 16),
-                    (float)Game1.pixelZoom,
+                    Game1.pixelZoom,
                     false);
 
                 this.recipes[category][pageMap[category]].Add(c, recipe);
@@ -289,7 +311,7 @@ namespace BetterCrafting
         private Dictionary<ClickableTextureComponent, CraftingRecipe> GetCurrentPage()
         {
             var craftingPages = this.recipes[this.selectedCategory];
-            if (this.recipePage >= craftingPages.Count)
+            if (this.recipePage >= craftingPages.Count || this.recipePage < 0)
             {
                 this.recipePage = 0;
             }
@@ -372,7 +394,7 @@ namespace BetterCrafting
                 this.recipePage += 1;
 
                 Game1.playSound("shwip");
-            }            
+            }
 
             this.UpdateScrollButtons();
         }
@@ -590,7 +612,7 @@ namespace BetterCrafting
                 else
                 {
                     this.inventory.applyMovementKey(direction);
-                }                
+                }
 
                 return;
             }
@@ -603,9 +625,9 @@ namespace BetterCrafting
                     if (snappedId == 0)
                     {
                         var gameMenu = (GameMenu)Game1.activeClickableMenu;
-                        if (gameMenu.junimoNoteIcon != null)
+                        if (junimoNoteIcon != null)
                         {
-                            this.currentlySnappedComponent = gameMenu.junimoNoteIcon;
+                            this.currentlySnappedComponent = junimoNoteIcon;
                         }
                         else
                         {
@@ -762,7 +784,6 @@ namespace BetterCrafting
 
         public override void receiveScrollWheelAction(int direction)
         {
-            base.receiveScrollWheelAction(direction);
 
             if (direction > 0)
             {
@@ -776,8 +797,8 @@ namespace BetterCrafting
 
         public override void performHoverAction(int x, int y)
         {
-            base.performHoverAction(x, y);
-
+            this.hoverTitle = "";
+            this.hoverText = "";
             this.hoverRecipe = null;
             this.hoverItem = this.inventory.hover(x, y, this.hoverItem);
 
@@ -785,11 +806,6 @@ namespace BetterCrafting
             {
                 this.hoverTitle = this.inventory.hoverTitle;
                 this.hoverText = this.inventory.hoverText;
-            }
-            else
-            {
-                this.hoverTitle = "";
-                this.hoverText = "";
             }
 
             var currentPage = this.GetCurrentPage();
@@ -873,7 +889,6 @@ namespace BetterCrafting
 
         public override void receiveLeftClick(int x, int y, bool playSound = true)
         {
-            base.receiveLeftClick(x, y, playSound);
 
             this.heldItem = this.inventory.leftClick(x, y, this.heldItem);
 
@@ -889,11 +904,15 @@ namespace BetterCrafting
 
             foreach (var c in currentPage.Keys)
             {
-                if (c.containsPoint(x, y)
-                    && c.hoverText.Equals(AVAILABLE)
-                    && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                int num = Game1.oldKBState.IsKeyDown(Keys.LeftShift) ? 5 : 1;
+                for (int index = 0; index < num; ++index)
                 {
-                    this.clickCraftingRecipe(c, true);
+                    if (c.containsPoint(x, y)
+                        && c.hoverText.Equals(AVAILABLE)
+                        && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                    {
+                        this.clickCraftingRecipe(c, index == 0 ? true : false);
+                    }
                 }
             }
 
@@ -912,31 +931,25 @@ namespace BetterCrafting
                 Game1.playSound("select");
 
                 GameMenu gameMenu = (GameMenu)Game1.activeClickableMenu;
-                var pages = this.betterCrafting.Helper.Reflection.GetFieldValue<List<IClickableMenu>>(gameMenu, "pages");
-                pages[gameMenu.currentTab] = new CraftingPage(this.xPositionOnScreen, this.yPositionOnScreen, this.width, this.height, false);
-
+                ModEntry.oldMenu = true;
+                Game1.activeClickableMenu = new GameMenu(gameMenu.currentTab);
                 return;
             }
 
-            if (this.trashCan.containsPoint(x, y) && this.heldItem != null && this.heldItem.canBeTrashed())
+            if (this.trashCan != null && this.trashCan.containsPoint(x, y) && (this.heldItem != null && this.heldItem.canBeTrashed()))
             {
                 if (this.heldItem is StardewValley.Object && Game1.player.specialItems.Contains((this.heldItem as StardewValley.Object).ParentSheetIndex))
-                {
                     Game1.player.specialItems.Remove((this.heldItem as StardewValley.Object).ParentSheetIndex);
-                }
-                this.heldItem = null;
+                this.heldItem = (Item)null;
                 Game1.playSound("trashcan");
-
-                return;
             }
-
-            if (this.heldItem != null && !this.isWithinBounds(x, y) && this.heldItem.canBeDropped())
+            else
             {
-                Game1.playSound("throwDownItem");
-                Game1.createItemDebris(this.heldItem, Game1.player.getStandingPosition(), Game1.player.facingDirection);
-                this.heldItem = null;
-
-                return;
+                if (this.heldItem == null || this.isWithinBounds(x, y) || !this.heldItem.canBeTrashed())
+                    return;
+                Game1.playSound("throwDownITem");
+                Game1.createItemDebris(this.heldItem, Game1.player.getStandingPosition(), Game1.player.FacingDirection, (GameLocation)null, -1);
+                this.heldItem = (Item)null;
             }
         }
 
@@ -949,7 +962,7 @@ namespace BetterCrafting
 
             if (this.heldItem == null)
             {
-                recipe.consumeIngredients();
+                recipe.consumeIngredients(_materialContainers);
                 this.heldItem = crafted;
 
                 if (playSound)
@@ -959,7 +972,7 @@ namespace BetterCrafting
             }
             else if (this.heldItem.Name.Equals(crafted.Name) && this.heldItem.Stack + recipe.numberProducedPerCraft - 1 < this.heldItem.maximumStackSize())
             {
-                recipe.consumeIngredients();
+                recipe.consumeIngredients(_materialContainers);
                 this.heldItem.Stack += recipe.numberProducedPerCraft;
 
                 if (playSound)
@@ -998,7 +1011,7 @@ namespace BetterCrafting
 
         public override void draw(SpriteBatch b)
         {
-            base.drawHorizontalPartition(b, this.yPositionOnScreen + IClickableMenu.borderWidth + IClickableMenu.spaceToClearTopBorder + Game1.tileSize * 4);
+            this.UpdateInventory();
 
             var currentPage = this.GetCurrentPage();
 
@@ -1007,6 +1020,8 @@ namespace BetterCrafting
                 if (c.hoverText.Equals(AVAILABLE))
                 {
                     c.draw(b, Color.White, 0.89f);
+                    if (currentPage[c].numberProducedPerCraft > 1)
+                        NumberSprite.draw(currentPage[c].numberProducedPerCraft, b, new Vector2((float)(c.bounds.X + 64 - 2), (float)(c.bounds.Y + 64 - 2)), Color.Red, (float)(0.5 * ((double)c.scale / 4.0)), 0.97f, 1f, 0, 0);
                 }
                 else if (c.hoverText.Equals(UNKNOWN))
                 {
@@ -1053,7 +1068,7 @@ namespace BetterCrafting
             this.trashCan.draw(b);
             b.Draw(
                 Game1.mouseCursors,
-                new Vector2((float)(this.trashCan.bounds.X + 60), (float)(this.trashCan.bounds.Y + 40)),
+                new Vector2(this.trashCan.bounds.X + 60, this.trashCan.bounds.Y + 40),
                 new Rectangle(686, 256, 18, 10),
                 Color.White,
                 this.trashCanLidRotation,
@@ -1061,8 +1076,6 @@ namespace BetterCrafting
                 Game1.pixelZoom,
                 SpriteEffects.None,
                 0.86f);
-
-            base.drawMouse(b);
 
             if (this.hoverItem != null)
             {
@@ -1086,8 +1099,8 @@ namespace BetterCrafting
             {
                 this.heldItem.drawInMenu(b,
                     new Vector2(
-                        (float)(Game1.getOldMouseX() + Game1.tileSize / 4),
-                        (float)(Game1.getOldMouseY() + Game1.tileSize / 4)),
+                        Game1.getOldMouseX() + Game1.tileSize / 4,
+                        Game1.getOldMouseY() + Game1.tileSize / 4),
                     1f);
             }
 
