@@ -135,11 +135,9 @@ namespace BetterCrafting
             this.trashCan = new ClickableTextureComponent(
                 new Rectangle(
                     this.xPositionOnScreen + width + 4,
-                    this.yPositionOnScreen + height - Game1.tileSize * 3 - Game1.tileSize / 2 - IClickableMenu.borderWidth - 104,
-                    Game1.tileSize, 104),
+                    yPositionOnScreen + height - 192 - 32 - IClickableMenu.borderWidth - 104, 64, 104),
                 Game1.mouseCursors,
-                new Rectangle(669, 261, 16, 26),
-                Game1.pixelZoom, false);
+                new Rectangle(564 + Game1.player.trashCanLevel * 18, 102, 18, 26), 4f, false);
 
             this.throwComp = new ClickableComponent(
                 new Rectangle(
@@ -1074,11 +1072,11 @@ namespace BetterCrafting
             b.Draw(
                 Game1.mouseCursors,
                 new Vector2(this.trashCan.bounds.X + 60, this.trashCan.bounds.Y + 40),
-                new Rectangle(686, 256, 18, 10),
+                new Rectangle(564 + Game1.player.trashCanLevel * 18, 129, 18, 10),
                 Color.White,
                 this.trashCanLidRotation,
                 new Vector2(16f, 10f),
-                Game1.pixelZoom,
+                4f,
                 SpriteEffects.None,
                 0.86f);
 
