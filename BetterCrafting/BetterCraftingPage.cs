@@ -1109,6 +1109,7 @@ namespace BetterCrafting
 
             if (this.hoverRecipe != null)
             {
+                IEnumerable<Item> extraItems = this._materialContainers?.SelectMany(chest => chest.items);
                 IClickableMenu.drawHoverText(b,
                     " ",
                     Game1.smallFont,
@@ -1118,7 +1119,7 @@ namespace BetterCrafting
                     this.hoverRecipe.name,
                     -1,
                     null,
-                    null, 0, -1, -1, -1, -1, 1f, this.hoverRecipe);
+                    null, 0, -1, -1, -1, -1, 1f, this.hoverRecipe, extraItems?.ToList());
             }
             else if (this.categoryText != null)
             {
