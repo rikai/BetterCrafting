@@ -249,8 +249,9 @@ namespace BetterCrafting
                 var x = this.pageX + xPad + column * (Game1.tileSize + spaceBetweenCraftingIcons);
                 var y = this.pageY + row * (Game1.tileSize * 2 + spaceBetweenCraftingIcons);
 
+                IEnumerable<Item> extraItems = this._materialContainers?.SelectMany(chest => chest.items);
                 var hoverText = Game1.player.craftingRecipes.ContainsKey(recipeName) ? (
-                    recipe.doesFarmerHaveIngredientsInInventory() ? AVAILABLE : UNAVAILABLE)
+                    recipe.doesFarmerHaveIngredientsInInventory(extraItems?.ToList()) ? AVAILABLE : UNAVAILABLE)
                     : UNKNOWN;
 
                 var c = new ClickableTextureComponent("",
@@ -907,11 +908,13 @@ namespace BetterCrafting
                 int num = Game1.oldKBState.IsKeyDown(Keys.LeftShift) ? 5 : 1;
                 for (int index = 0; index < num; ++index)
                 {
-                    if (c.containsPoint(x, y)
-                        && c.hoverText.Equals(AVAILABLE)
-                        && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                    if (c.containsPoint(x, y) && c.hoverText.Equals(AVAILABLE))
                     {
-                        this.clickCraftingRecipe(c, index == 0 ? true : false);
+                        IEnumerable<Item> extraItems = this._materialContainers?.SelectMany(chest => chest.items);
+                        if (currentPage[c].doesFarmerHaveIngredientsInInventory(extraItems?.ToList()))
+                        {
+                            this.clickCraftingRecipe(c, index == 0 ? true : false);
+                        }
                     }
                 }
             }
@@ -1000,11 +1003,13 @@ namespace BetterCrafting
 
             foreach (var c in currentPage.Keys)
             {
-                if (c.containsPoint(x, y)
-                    && c.hoverText.Equals(AVAILABLE)
-                    && currentPage[c].doesFarmerHaveIngredientsInInventory())
+                if (c.containsPoint(x, y) && c.hoverText.Equals(AVAILABLE))
                 {
-                    this.clickCraftingRecipe(c, true);
+                    IEnumerable<Item> extraItems = this._materialContainers?.SelectMany(chest => chest.items);
+                    if (currentPage[c].doesFarmerHaveIngredientsInInventory(extraItems?.ToList()))
+                    {
+                        this.clickCraftingRecipe(c, true);
+                    }
                 }
             }
         }
