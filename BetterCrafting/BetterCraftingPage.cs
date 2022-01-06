@@ -12,7 +12,7 @@ using static BetterCrafting.CategoryManager;
 
 namespace BetterCrafting
 {
-    internal class BetterCraftingPage : CraftingPage
+    internal class BetterCraftingPage : CraftingPage, IDisposable
     {
         private const int WIDTH = 800;
         private const string AVAILABLE = "a";
@@ -22,6 +22,11 @@ namespace BetterCrafting
 
         private int pageX;
         private int pageY;
+
+        public void Dispose()
+        {
+            ModEntry.Instance.Monitor.Log($"Called Dispose() inside BetterCraftingPage at {this.GetHashCode()}. Will dispose of object.", LogLevel.Trace);
+        }
 
         private ModEntry betterCrafting;
 
