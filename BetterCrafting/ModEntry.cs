@@ -13,11 +13,13 @@ namespace BetterCrafting
         public static bool oldMenu = false;
         private CategoryData categoryData;
         public ItemCategory? lastCategory;
+        public static ModEntry Instance { get; protected set; }
 
         /// <summary>The mod entry point, called after the mod is first loaded.</summary>
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
+            Instance = this;
             this.categoryData = this.Helper.Data.ReadJsonFile<CategoryData>("categories.json");
             if (this.categoryData == null)
             {
@@ -29,6 +31,16 @@ namespace BetterCrafting
 
             helper.Events.Display.MenuChanged += OnMenuChanged;
             helper.Events.Player.InventoryChanged += OnInventoryChanged;
+            helper.Events.Display.WindowResized += Display_WindowResized;
+        }
+
+        private void Display_WindowResized(object sender, WindowResizedEventArgs e)
+        {
+            if (Game1.activeClickableMenu is BetterCraftingPage menu)
+            {
+                menu.Dispose();
+                Game1.activeClickableMenu = new GameMenu((Game1.activeClickableMenu as GameMenu).getTabNumberFromName("crafting"));
+            }
         }
 
         /// <summary>Raised after a game menu is opened, closed, or replaced.</summary>
